@@ -194,7 +194,7 @@ drwxr-xr-x 2 root root  4096 May 28 12:59 jail.d
 The key thing to note is that we can read everything.
 User `asterisk` can also run all sudo commands with `fail2ban-client` meaning that
 we should have permission to redirect to new configuration files and restart the service.
-Together with the writable configuration file, we have a working exploit.
+If we can get a writable configuration file, we have a working exploit.
 
 ```bash
 $ cd /etc/fail2ban
@@ -249,7 +249,7 @@ uid=0(root) gid=0(root) groups=0(root),1001(asterisk)
 ## 5. Find the Root Flag
 
 ```bash
-$ find / -name root.txt -exec cat {} \; -quit 2>/dev/ null
+$ find / -name root.txt -exec cat {} \; -quit 2>/dev/null
 THM{33ad5b530e71a172648f424ec23fae60}
 ```
 
