@@ -12,9 +12,7 @@ First exploit the encryption scheme in the simplest possible way, then find the 
 
 > What is the encryption key?  
 
-## Steps
-
-1. Enumerate ports
+## 1. Enumerate ports
 `nmap -A -sC -sV`
 ```bash
 ┌──(edibble㉿kali)-[~]
@@ -51,13 +49,24 @@ Nmap done: 1 IP address (1 host up) scanned in 42.37 seconds
 
 There are ssh and http ports running on an apache web server.
 
-2. After inspecting the page there is reference to .bak files so use ffuf to fuzz directories
+## 2. Fuzz Directories
+
+After inspecting the page there is reference to `.bak` files so use `ffuf` to fuzz directories.
+
+```html
+<p>
+  SSO Cookie is protected with military grade en
+  <b>crypt</b>
+  ion
+  <!--TODO remember to remove .bak files-->
+```
 
 ```bash
 ffuf -w /usr/share/dirbuster/wordlists/directory-list-2.3-small.txt -u http://10.201.15.131/FUZZ -e .php,.php.bak -mc all -fc 404 -t 80
 ```
 
-3. Use `wget` to grab the index.php.bak
+## 3. Use `wget` to grab the index.php.bak
+
 ```php
 <?php
 include('config.php');
@@ -143,27 +152,27 @@ if ( isset($_COOKIE['secure_cookie']) && isset($_COOKIE['user']))  {
 ?>
 ```
 
-Function generate_cookie
-- Creates a 2 character random salt
-- Creates a secure cookie string
-- Sets secure and user cookies
+Function `generate_cookie`
+1. Creates a 2 character random salt
+2. Creates a secure cookie string
+3. Sets secure and user cookies
 
-Function cryptstring
-- Encrypts a value with a salt
+Function `cryptstring`
+1. Encrypts a value with a salt
 
 Function make_secure_cookie
-- Splits the string and calls cyptsrting on every 8 characters to generate the secure cookie
+1. Splits the string and calls `cyptsrting` on every 8 characters to generate the secure cookie
 
-Function generatesalt
-- Randomly generates n-length salt \[0-9a-zA-Z\]
+Function `generatesalt`
+1. Randomly generates n-length salt \[0-9a-zA-Z\]
 
-Function verify_cookie
-- Regenerates a new secure cookie with the same salt and compares it to the original
+Function `verify_cookie
+1. Regenerates a new secure cookie with the same salt and compares it to the original
 
 Rest of the script
-- Checks if both cookies are set and verifies the secure cookie otherwise generates new cookies
-- If user is admin you get the thm flag otherwise a user message
-- If not logged in it gives a message for that too
+1. Checks if both cookies are set and verifies the secure cookie otherwise generates new cookies
+2. If user is admin you get the thm flag otherwise a user message
+3. If not logged in it gives a message for that too
 
 My HTTP_USER_AGENT is
 Mozilla/5.0 (X11; Linux x86_64; rv:141.0) Gecko/20100101 Firefox/141.0  
@@ -177,9 +186,78 @@ From this code snippet: `if ($user === "admin")`, we want to set the user cookie
 
 Above is the secure cookie. The first two bytes of each block are the salt: “R1”.  
 
-4. Tamper with the cookie to get the first key
+## 4. Tamper with the cookie to get the first key
 
-5. Write a python script to brute force the second key
+This can be done directly in the browser or with `curl`.
+
+## 5. Write a python script to brute force the second key
+
+```python
+#!/usr/bin/env python
+
+import string
+import urllib.parse
+from requests import Session
+from crypt_r import crypt # crypt was deprecated and removed in python 3.13
+
+# The goal is to find the value of ENC_SECRET_KEY which is hashed within
+# the secure_cookie. The format is USER:USER_AGENT:ENC_SECRET_KEY.
+
+# Each 8-byte block is encrypted with a 2-byte salt. Use the USER_AGENT as
+# padding to brute force the ENC_SECRET_KEY. Start with a really long USER_AGENT
+# and remove a character each time until you reveal the full ENC_SECRET_KEY.
+
+# guest:AA ... AAAAAA:S ... 128 A
+# guest:AA ... AAAAA:SS ... 127 A
+# guest:AA ... AAAA:SSS ... 126 A
+# guest:AA ... AAA:SSSS ... 125 A
+# guest:AA ... AA:SSSSS ... 124 A
+# ...                 ^
+
+# I don't know how long the ENC_SECRET_KEY is so I'll give a lot of padding first
+
+BASE_URL = ""
+USER = "guest"
+CHARSET = string.printable
+
+# https://stackoverflow.com/questions/31554771/how-can-i-use-cookies-in-python-requests
+def get_secure_cookie(user_agent):
+    session = Session()
+    session.get(BASE_URL, headers={"User-Agent": user_agent})
+    cookie = session.cookies.get("secure_cookie")
+    # Replace %xx escapes with their single-character equivalent.
+    return urllib.parse.unquote(cookie)
+
+user_agent = 'A' * 512
+enc_secret_key = ""
+while True:
+    # The last 7 bytes of the found (unencrypted) cookie
+    tail = (('A' * 6) + ':' + enc_secret_key)[-7:]
+    secure_cookie = get_secure_cookie(user_agent)
+    salt = secure_cookie[:2]
+
+    # The target is encrypted so it is 13 bytes wide (including the salt)
+    # instead of an 8 byte wide unencrypted block.
+    # ((512[padding] + 8) / 8) * 13[encrypted block size]
+    target = secure_cookie[832:845]
+
+    found = False
+    for char in CHARSET:
+        encrypted_block = crypt(tail + char, salt)
+        if encrypted_block == target:
+            found = True
+            break
+
+    if not found:
+        break
+
+    enc_secret_key += char
+    user_agent = user_agent[:-1]
+    # This will spill over towards the end since the string gets real long
+    print(f"\r{enc_secret_key}", end="")
+
+print("\ndone")
+```
 
 ## Sources
 
