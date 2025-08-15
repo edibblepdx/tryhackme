@@ -239,7 +239,7 @@ apache@tryhackme:/data/www/default$ cat 650c844110baced87e1606453b93f22a.txt
 THM{fl46_650c844110baced87e1606453b93f22a}
 ```
 
-## 5. Find the service name affiliated with the suspicious process
+## 6. Find the service name affiliated with the suspicious process
 
 I tried to list all processes with `ps -elf`, but it was a lot to sort through so I skipped to listing services with `systemctl | grep running` and found the answer to question 3 which is `ubuntu.service`.
 
@@ -250,7 +250,7 @@ $ systemctl | grep running
 ...
 ```
 
-## 6. Find the name of the suspicious process
+## 7. Find the name of the suspicious process
 
 We can run `systemctl cat ubuntu.service` to find the answer to question 2 which is __nm-inet-dialog__.
 
@@ -269,7 +269,7 @@ Restart=on-failure
 WantedBy=multi-user.target
 ```
 
-## 7. Find the log file name of the miner instance
+## 8. Find the log file name of the miner instance
 
 ```bash
 $ cd /usr/lib/NetworkManager 
@@ -293,7 +293,7 @@ drwxr-xr-x 2 root root    4096 Nov 27  2021 system-connections
 ```
 > inet.conf is the name of the log file for question 4
 
-## 8. Find the wallet address of the miner instance
+## 9. Find the wallet address of the miner instance
 
 ```bash
 $ grep -a -i -v miner inet.conf
@@ -325,6 +325,6 @@ I found more about bitcoin wallet addresses [here](https://support.imkey.im/hc/e
 
 > Bc1qyk79fcp9hd5kreprce89tkh4wrtl8avt4l67qa
 
-## 9. Find the Associated Threat Group
+## 10. Find the Associated Threat Group
 
 For the last question you have to search through all off the [transactions](https://www.blockchain.com/explorer/addresses/btc/bc1qyk79fcp9hd5kreprce89tkh4wrtl8avt4l67qa) until you find a wallet address that leads to the answer, i.e. read a bunch of sites to find [__LockBit__](https://ofac.treasury.gov/recent-actions/20240220).
