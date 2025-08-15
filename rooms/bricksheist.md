@@ -1,4 +1,6 @@
-# Description
+
+# TryHack3M: Bricks Heist
+https://tryhackme.com/room/tryhack3mbricksheist
 
 Crack the code, command the exploit! Dive into the heart of the system with just an RCE CVE as your key.  
 
