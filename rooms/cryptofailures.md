@@ -166,7 +166,7 @@ Function make_secure_cookie
 Function `generatesalt`
 1. Randomly generates n-length salt \[0-9a-zA-Z\]
 
-Function `verify_cookie
+Function `verify_cookie`
 1. Regenerates a new secure cookie with the same salt and compares it to the original
 
 Rest of the script
