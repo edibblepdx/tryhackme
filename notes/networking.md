@@ -157,3 +157,53 @@ The Internet protocol has a field called Time-to-Live (TTL) that indicates the m
 Use one (technically two) __public IP addresses__ to provide internet access to many __private IP addresses__.  
 
 The router maintains a table that maps the internal IP address and port number with its external IP address and port number.  
+
+# Networking Core Protocols
+
+## DNS: Domain Name System
+
+Operates at the Application Layer. DNS traffic uses UDP port 53 by default and TCP port 53 as a default fallback.  
+
+#### Common DNS Records
+
+- __A record__: The A (Address) record maps a hostname to one or more IPv4 addresses.
+
+- __AAAA Record__: The AAAA record is similar to the A Record, but it is for IPv6.
+
+- __CNAME Record__: The CNAME (Canonical Name) record maps a domain name to another domain name.
+
+- __MX Record__: The MX (Mail Exchange) record specifies the mail server responsible for handling emails for a domain.
+
+## WHOIS
+
+The WHOIS record provides information about the entity that registered a domain name, including name, phone number, email, and address.  
+
+## HTTP(S): Hyper Text Transfer Protocol (Secure)
+
+This protocol relies on TCP and defines how your web browser communicates with the web servers. HTTP and HTTPS commonly use TCP ports 80 and 443, respectively.  
+
+Common methods: `GET`, `POST`, `PUT`, `DELETE`  
+
+## FTP: File Transfer Protocol
+
+FTP server listens on TCP port 21 by default.  
+
+Common methods: `USER`, `PASS`, `RETR`, `STOR`, `LIST`  
+
+## SMTP: Sending Email
+
+Simple Mail Transfer Protocol (SMTP) defines how a mail client talks with a mail server and how a mail server talks with another. The SMTP server listens on TCP port 25 by default.  
+
+Common methods: `HELO` or `EHLO`, `MAIL FROM`, `RCPT TO`, `DATA`, `.`  
+
+## POP3: Receiving Email
+
+Post Office Protocol version 3 (POP3) is designed to allow the client to communicate with a mail server and retrieve email messages. The POP3 server listens on TCP port 110 by default.  
+
+Common methods: `USER <username>`, `PASS <password>`, `STAT`, `LIST`, `RETR <message_number>`, `DELE <message_number>`, `QUIT`  
+
+## IMAP: Synchronizing Email
+
+Internet Message Access Protocol (IMAP) is a solution for synchronized mailbox across multiple devices. IMAP allows synchronizing read, moved, and deleted messages. The IMAP server listens on TCP port 143 by default.  
+
+Common methods: `LOGIN <username> <password>, SELECT <mailbox>`, `FETCH <mail_number> <data_item_name>`, `MOVE <sequence_set> <mailbox>`, `COPY <sequence_set> <data_item_name>`, `LOGOUT`  
