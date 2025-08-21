@@ -207,3 +207,57 @@ Common methods: `USER <username>`, `PASS <password>`, `STAT`, `LIST`, `RETR <mes
 Internet Message Access Protocol (IMAP) is a solution for synchronized mailbox across multiple devices. IMAP allows synchronizing read, moved, and deleted messages. The IMAP server listens on TCP port 143 by default.  
 
 Common methods: `LOGIN <username> <password>, SELECT <mailbox>`, `FETCH <mail_number> <data_item_name>`, `MOVE <sequence_set> <mailbox>`, `COPY <sequence_set> <data_item_name>`, `LOGOUT`  
+
+# Networking Secure Protocols
+
+## TLS: Transport Layer Security
+
+Like SSL, its predecessor, TLS is a cryptographic protocol operating at the OSI model’s transport layer. TLS supports Confidentiality and Integrity.  
+
+TLS certificates identify the server (or the client) to others. Someone creates a Certificate Signing Request (CSR) and submits it to a Certificate Authority (CA) for verification.  
+
+## HTTPS
+
+Standard HTTP will require three steps (after resolving the domain name):  
+
+1. Establish a TCP three-way handshake with the target server  
+2. Communicate using the HTTP protocol  
+
+HTTP over TLS will require three steps (after resolving the domain name):  
+
+1. Establish a TCP three-way handshake with the target server  
+2. Establish a TLS session  
+3. Communicate using the HTTP protocol  
+
+## SMTPS, POP3S, and IMAPS
+
+| Protocol | Default Port Number |
+| -------- | ------------------- |
+| HTTP     | 80                  |
+| HTTPS    | 443                 |
+| SMTP     | 25                  |
+| SMTPS    | 465 and 587         |
+| POP3     | 110                 |
+| POP3S    | 995                 |
+| IMAP     | 143                 |
+| IMAPS    | 993                 |
+
+## SSH
+
+The TELNET server listens on port 23 and the SSH server listens on port 22. TELNET is insecure. When you use your SSH client it is most likely based on OpenSSH. OpenSSH offers several benefits:  
+
+- Secure authentication
+- Confidentiality
+- Integrity
+- Tunneling
+- X11 Forwarding
+
+## SFTP and FTPS
+
+SFTP stands for SSH File Transfer Protocol. SFTP shares port 22.  
+
+FTPS stands fro File Transfer Protocol Secure and uses TLS. FTPS usually uses port 990.  
+
+## VPN: Virtual Private Network
+
+Once a VPN tunnel is established, all Internet traffic will usually be routed over the VPN connection. Your public IP address is not visible, only the VPN server's. The local ISP will only see encrypted traffic.  
